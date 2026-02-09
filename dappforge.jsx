@@ -2170,7 +2170,7 @@ contract OmegaToken is ERC20, Ownable {
                     background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff",
                     display: "flex", alignItems: "center", gap: 4
                   }}>
-                    {ideCompile === "compiling" || estimatingGas ? "..." : "Compile"}
+                    {ideCompile === "compiling" || estimatingGas ? "..." : `Compile: ${ideFiles[ideActiveFile]?.name || "Contract"}`}
                   </button>
                   <button onClick={(e) => {
                     e.stopPropagation();
@@ -2181,7 +2181,7 @@ contract OmegaToken is ERC20, Ownable {
                     background: "#fff", border: "none", color: "#000",
                     display: "flex", alignItems: "center", gap: 4
                   }}>
-                    Deploy
+                    Deploy: {ideFiles[ideActiveFile]?.name || "Contract"}
                   </button>
                   <button onClick={(e) => { e.stopPropagation(); setIdeConsole([]); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 10, fontFamily: F, marginLeft: 4 }}>CLEAR</button>
                 </div>
