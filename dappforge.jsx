@@ -941,7 +941,8 @@ contract OmegaToken is ERC20, Ownable {
           compiledContracts.push({
             name: contract,
             abi: output.contracts[file][contract].abi,
-            bytecode: output.contracts[file][contract].evm.bytecode.object
+            bytecode: output.contracts[file][contract].evm.bytecode.object,
+            fileName: file
           });
         }
       }
@@ -978,11 +979,13 @@ contract OmegaToken is ERC20, Ownable {
     }
 
     const isIde = view === "standalone-ide";
+    const currentFileName = isIde ? ideFiles[ideActiveFile]?.name : "";
 
     if (!isIde) {
       setView("deploying"); setDeployPct(0); setDeployLogs([]);
     } else {
       setIdeConsole(p => [...p, "> Starting deployment..."]);
+      setIdeCompile("compiling");
     }
 
     // Check if we have artifacts from IDE compilation (if coming from IDE) or need to compile template (wizard)
@@ -1006,7 +1009,8 @@ contract OmegaToken is ERC20, Ownable {
               artifacts.push({
                 name: c,
                 abi: output.contracts[f][c].abi,
-                bytecode: output.contracts[f][c].evm.bytecode.object
+                bytecode: output.contracts[f][c].evm.bytecode.object,
+                fileName: f
               });
             }
           }
@@ -1021,9 +1025,26 @@ contract OmegaToken is ERC20, Ownable {
     // If still no artifacts
     if (!artifacts || artifacts.length === 0) {
       const msg = "No compiled contracts found. Please compile first.";
-      if (isIde) setIdeConsole(p => [...p, `> ✗ ${msg}`]);
-      else setDeployLogs(p => [...p, msg]);
+      if (isIde) {
+        setIdeConsole(p => [...p, `> ✗ ${msg}`]);
+        setIdeCompile("error");
+      } else {
+        setDeployLogs(p => [...p, msg]);
+      }
       return;
+    }
+
+    // Filter to only deploy the "main" contract
+    let targetArtifacts = artifacts;
+    if (isIde && currentFileName) {
+      // Try to find contract in current file
+      const main = artifacts.filter(a => a.fileName === currentFileName || currentFileName.includes(a.name));
+      if (main.length > 0) targetArtifacts = main;
+      else targetArtifacts = [artifacts[artifacts.length - 1]];
+    } else if (tmpl) {
+      const main = artifacts.find(a => tmpl.contracts.includes(a.name) || a.name === tmpl.name);
+      if (main) targetArtifacts = [main];
+      else targetArtifacts = [artifacts[artifacts.length - 1]];
     }
 
     if (!isIde) setDeployPct(20);
@@ -1039,10 +1060,10 @@ contract OmegaToken is ERC20, Ownable {
       else { setDeployLogs(p => [...p, connectedMsg]); setDeployPct(30); }
 
       const deployedAddrs = [];
-      const total = artifacts.length;
+      const total = targetArtifacts.length;
 
       for (let i = 0; i < total; i++) {
-        const art = artifacts[i];
+        const art = targetArtifacts[i];
         const deployMsg = `Deploying ${art.name}...`;
         if (isIde) setIdeConsole(p => [...p, `> ${deployMsg}`]);
         else setDeployLogs(p => [...p, deployMsg]);
@@ -1050,36 +1071,51 @@ contract OmegaToken is ERC20, Ownable {
         const factory = new ethers.ContractFactory(art.abi, art.bytecode, signer);
         try {
           const deployArgs = [];
-          if (art.abi.find(x => x.type === 'constructor')?.inputs.length > 0) {
-            // Mock args for demo: pass 0 or address(0)
-            const inputs = art.abi.find(x => x.type === 'constructor').inputs;
+          const constructor = art.abi.find(x => x.type === 'constructor');
+          if (constructor?.inputs.length > 0) {
+            const inputs = constructor.inputs;
+            const currentWalletAddr = await signer.getAddress();
             for (const input of inputs) {
               if (input.type.includes("uint")) deployArgs.push(100);
-              else if (input.type.includes("address")) deployArgs.push(signerAddr);
-              else if (input.type.includes("string")) deployArgs.push("Demo");
+              else if (input.type.includes("address")) deployArgs.push(currentWalletAddr);
+              else if (input.type.includes("string")) deployArgs.push("Demo Token");
               else if (input.type.includes("bool")) deployArgs.push(true);
               else deployArgs.push("0x");
             }
-            if (isIde) setIdeConsole(p => [...p, `>    (Using mock args: ${deployArgs.join(', ')})`]);
-            else setDeployLogs(p => [...p, `   (Using mock args: ${deployArgs.join(', ')})`]);
+            const argMsg = `   (Using mock args: ${deployArgs.join(', ')})`;
+            if (isIde) setIdeConsole(p => [...p, `> ${argMsg}`]);
+            else setDeployLogs(p => [...p, argMsg]);
           }
 
           const contract = await factory.deploy(...deployArgs);
-          const txMsg = `   Tx sent: ${contract.deploymentTransaction().hash.slice(0, 10)}...`;
-          if (isIde) setIdeConsole(p => [...p, `> ${txMsg}`]);
-          else setDeployLogs(p => [...p, txMsg]);
+          const txHash = contract.deploymentTransaction().hash;
+          const txMsg = `   Tx sent: ${txHash.slice(0, 10)}...`;
+          const explorerLink = chain.explorer ? `> View Tx: https://${chain.explorer}/tx/${txHash}` : "";
+
+          if (isIde) {
+            setIdeConsole(p => [...p, `> ${txMsg}`, explorerLink].filter(Boolean));
+          } else {
+            setDeployLogs(p => [...p, txMsg, explorerLink].filter(Boolean));
+          }
 
           await contract.waitForDeployment();
           const addr = await contract.getAddress();
 
           deployedAddrs.push({ name: art.name, address: addr });
-          const successMsg = `   ✓ Deployed ${art.name} at ${addr.slice(0, 8)}...`;
-          if (isIde) setIdeConsole(p => [...p, `> ${successMsg}`]);
-          else { setDeployLogs(p => [...p, successMsg]); setDeployPct(30 + ((i + 1) / total * 60)); }
+          const successMsg = `   ✓ Deployed ${art.name} at ${addr}`;
+          const addrExplorer = chain.explorer ? `> View Contract: https://${chain.explorer}/address/${addr}` : "";
+
+          if (isIde) setIdeConsole(p => [...p, `> ${successMsg}`, addrExplorer].filter(Boolean));
+          else {
+            setDeployLogs(p => [...p, successMsg, addrExplorer].filter(Boolean));
+            setDeployPct(30 + ((i + 1) / total * 60));
+          }
 
         } catch (e) {
           console.error(e);
-          const failMsg = `   ✗ Failed to deploy ${art.name}: ${e.message.slice(0, 50)}...`;
+          let errMsg = e.message;
+          if (errMsg.includes("user rejected")) errMsg = "User rejected transaction";
+          const failMsg = `   ✗ Failed to deploy ${art.name}: ${errMsg.slice(0, 100)}...`;
           if (isIde) setIdeConsole(p => [...p, `> ${failMsg}`]);
           else setDeployLogs(p => [...p, failMsg]);
         }
@@ -1092,15 +1128,36 @@ contract OmegaToken is ERC20, Ownable {
           setTimeout(() => setView("done"), 1000);
         } else {
           setIdeConsole(p => [...p, "> 🎉 Deployment complete!"]);
+          setIdeCompile("success");
+          setShowCelebration(true);
+          setTimeout(() => setShowCelebration(false), 3000);
+
+          // Add to deployment history
+          const last = deployedAddrs[deployedAddrs.length - 1];
+          setDeploymentHistory(prev => [{
+            name: last.name,
+            address: last.address,
+            network: chain.name,
+            time: new Date().toLocaleTimeString(),
+            verified: false
+          }, ...prev]);
         }
       } else {
         if (!isIde) setDeployLogs(p => [...p, "Deployment finished with errors."]);
-        else setIdeConsole(p => [...p, "> Deployment finished with errors."]);
+        else {
+          setIdeConsole(p => [...p, "> Deployment finished with errors."]);
+          setIdeCompile("error");
+        }
       }
-
     } catch (e) {
-      if (isIde) setIdeConsole(p => [...p, `> Error: ${e.message}`]);
-      else setDeployLogs(p => [...p, `Error: ${e.message}`]);
+      console.error(e);
+      const msg = `Deployment error: ${e.message}`;
+      if (isIde) {
+        setIdeConsole(p => [...p, `> ✗ ${msg}`]);
+        setIdeCompile("error");
+      } else {
+        setDeployLogs(p => [...p, msg]);
+      }
     }
   }
 
@@ -2070,7 +2127,6 @@ contract OmegaToken is ERC20, Ownable {
                       setTimeout(() => {
                         setGasEstimate("~2.1M gas (~$4.20)");
                         setEstimatingGas(false);
-                        setConsoleHeight(130);
                         setConsoleExpanded(true);
                       }, 500);
                     });
@@ -2084,23 +2140,7 @@ contract OmegaToken is ERC20, Ownable {
                   <button onClick={(e) => {
                     e.stopPropagation();
                     if (!wallet) { connect(); return; }
-                    ideCompileAll().then(() => {
-                      setTimeout(() => {
-                        const newDeploy = {
-                          name: ideFiles[ideActiveFile]?.name || "Contract",
-                          address: "0x" + Math.random().toString(16).slice(2, 42),
-                          network: chain.name,
-                          time: new Date().toLocaleTimeString(),
-                          verified: false
-                        };
-                        setDeploymentHistory(prev => [newDeploy, ...prev]);
-                        setShowCelebration(true);
-                        setTimeout(() => setShowCelebration(false), 2000);
-                        setIdeConsole(prev => [...prev, `✓ Deployed ${newDeploy.name} to ${chain.name}`, `  Address: ${newDeploy.address}`]);
-                        setConsoleHeight(130);
-                        setConsoleExpanded(true);
-                      }, 1000);
-                    });
+                    deploy();
                   }} style={{
                     padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer",
                     background: "#fff", border: "none", color: "#000",
