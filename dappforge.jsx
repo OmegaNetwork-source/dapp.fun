@@ -1118,8 +1118,8 @@ contract OmegaToken is ERC20, Ownable {
       <div style={{ padding: "9px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `1px solid ${bd}`, background: sf, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {back && <button onClick={back} style={{ background: "none", border: "none", color: t2, cursor: "pointer", fontSize: 15, padding: "2px 5px" }}>←</button>}
-          {tmpl && <span style={{ color: accent, fontSize: 16 }}>{tmpl.icon}</span>}
-          <span style={{ fontWeight: 700, fontSize: 14, color: t1, fontFamily: D }}>{typeof title === "string" && title === "Dapp.Fun" ? <>Dapp<span style={{ color: "#fff", opacity: 0.8 }}>.Fun</span></> : title}</span>
+          {title === "Dapp.Fun" ? <Logo size={20} /> : (tmpl && <span style={{ color: accent, fontSize: 16 }}>{tmpl.icon}</span>)}
+          <span style={{ fontWeight: 700, fontSize: 14, color: t1, fontFamily: D }}>{typeof title === "string" && (title === "Dapp.Fun" || title === "Wizard") ? <>Dapp<span style={{ color: "#fff", opacity: 0.8 }}>.Fun</span></> : title}</span>
           {sub && <span style={{ color: t2, fontSize: 11 }}>— {sub}</span>}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1408,12 +1408,18 @@ contract OmegaToken is ERC20, Ownable {
       <div className="blob" style={{ width: 600, height: 600, background: "radial-gradient(circle, #cecece 0%, transparent 70%)", bottom: "-20%", left: "-10%", opacity: 0.05 }}></div>
 
       {/* Top Bar */}
-      <div style={{ padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 100 }}>
-        <button onClick={() => setView("home")} className="glass-pill" style={{ padding: "8px 20px", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600 }}>
-          ← Back
-        </button>
-        <div className="glass-pill" style={{ padding: "8px 20px", fontWeight: 700, fontSize: 14 }}>Template Library</div>
-        <div style={{ width: 80 }} />{/* Spacer */}
+      <div style={{ padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 100, borderBottom: `1px solid ${bd}`, background: "rgba(255,255,255,0.02)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <button onClick={() => setView("home")} className="glass-pill" style={{ padding: "8px 20px", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600 }}>
+            ← Back
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Logo size={24} />
+            <div style={{ fontWeight: 700, fontSize: 18, color: "#fff" }}>Dapp<span style={{ opacity: 0.7 }}>.Fun</span></div>
+          </div>
+        </div>
+        <div className="glass-pill" style={{ padding: "8px 20px", fontWeight: 700, fontSize: 13, color: t2 }}>Template Library</div>
+        <div style={{ width: 150 }} />{/* Spacer */}
       </div>
 
       <div style={{ flex: 1, padding: "20px 40px", overflow: "auto" }}>
