@@ -910,13 +910,20 @@ contract OmegaToken is ERC20, Ownable {
   }
   async function ideCompileAll() {
     setIdeCompile("compiling");
-    setIdeConsole(p => [...p, "> Starting compilation..."]);
+    const activeFile = ideFiles[ideActiveFile];
+    const targetFile = activeFile?.name?.endsWith(".sol") ? activeFile.name : null;
+
+    setIdeConsole(p => [...p, `> Starting compilation${targetFile ? " of " + targetFile : ""}...`]);
 
     // Prepare sources for compiler
     const sources = {};
     ideFiles.filter(f => f.name.endsWith(".sol")).forEach(f => {
       sources[f.name] = { content: f.content };
     });
+
+    // If we have a target file, we only need to pass THAT to the resolver as entry
+    // but the resolver will find others in 'sources'. 
+    // Actually, passing all local sources is safer to resolve local imports.
 
     try {
       const output = await compileSolidity(sources);
@@ -936,8 +943,14 @@ contract OmegaToken is ERC20, Ownable {
       }
 
       const compiledContracts = [];
+      let activeFileArtifacts = 0;
+      let totalArtifacts = 0;
+
       for (const file in output.contracts) {
         for (const contract in output.contracts[file]) {
+          totalArtifacts++;
+          if (file === targetFile) activeFileArtifacts++;
+
           compiledContracts.push({
             name: contract,
             abi: output.contracts[file][contract].abi,
@@ -947,7 +960,11 @@ contract OmegaToken is ERC20, Ownable {
         }
       }
 
-      setIdeConsole(p => [...p, `> ✓ Compilation successful!`, `> Generated ${compiledContracts.length} artifacts.`]);
+      const summary = targetFile
+        ? `> ✓ Compiled ${targetFile} (${activeFileArtifacts} contract${activeFileArtifacts > 1 ? "s" : ""}). Total artifacts: ${totalArtifacts}.`
+        : `> ✓ Compilation successful! Generated ${totalArtifacts} artifacts.`;
+
+      setIdeConsole(p => [...p, summary]);
       setIdeCompile("success");
 
       // Store compiled artifacts for deployment
@@ -1052,6 +1069,24 @@ contract OmegaToken is ERC20, Ownable {
     try {
       if (!window.ethereum) throw new Error("No wallet found");
       const provider = new ethers.BrowserProvider(window.ethereum);
+
+      // Network Verification
+      const network = await provider.getNetwork();
+      if (chain.chainId && network.chainId !== BigInt(chain.chainId)) {
+        setIdeConsole(p => [...p, `> ⚠ Network mismatch. Selected: ${chain.name}. Wallet: Chain ${network.chainId}.`]);
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: chain.hexId }],
+          });
+          // Brief pause for signer change
+          await new Promise(r => setTimeout(r, 500));
+        } catch (e) {
+          console.warn(e);
+          throw new Error(`Please switch MetaMask to ${chain.name} (Chain ID: ${chain.chainId})`);
+        }
+      }
+
       const signer = await provider.getSigner();
       const signerAddr = await signer.getAddress();
 
@@ -1064,7 +1099,7 @@ contract OmegaToken is ERC20, Ownable {
 
       for (let i = 0; i < total; i++) {
         const art = targetArtifacts[i];
-        const deployMsg = `Deploying ${art.name}...`;
+        const deployMsg = `Deploying ${art.name} to ${chain.name}...`;
         if (isIde) setIdeConsole(p => [...p, `> ${deployMsg}`]);
         else setDeployLogs(p => [...p, deployMsg]);
 
