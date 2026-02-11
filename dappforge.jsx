@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { ethers } from "ethers";
 import { compileSolidity } from "./solidityCompiler";
 import { solanaDeployToken } from "./solanaUtils";
+import Showcase from "./Showcase";
 
 const CHAINS = [
-  { id: "omega", name: "Omega Network", icon: "Ω", color: "#1E90FF", explorer: "explorer.omeganetwork.co", chainId: 1313161768, hexId: "0x4e454128", rpc: "https://0x4e454228.rpc.aurora-cloud.dev", symbol: "OMN" },
+  { id: "omega-mainnet", name: "Omega Mainnet", icon: "Ω", color: "#1E90FF", explorer: "0x4e4542bc.explorer.aurora-cloud.dev", chainId: 1313161916, hexId: "0x4e4542bc", rpc: "https://0x4e4542bc.rpc.aurora-cloud.dev", symbol: "OMN" },
+  { id: "omega-testnet", name: "Omega Testnet", icon: "Ω", color: "#1E90FF", explorer: "explorer.omeganetwork.co", chainId: 1313161768, hexId: "0x4e454128", rpc: "https://0x4e454228.rpc.aurora-cloud.dev", symbol: "OMN" },
   { id: "solana", name: "Solana", icon: "◎", color: "#14F195", explorer: "explorer.solana.com", symbol: "SOL" },
   { id: "somnia", name: "Somnia", icon: "S", color: "#2E3A59", explorer: "explorer.somnia.network", chainId: 5031, hexId: "0x13a7", rpc: "https://api.infra.mainnet.somnia.network/", symbol: "SOMI" },
   { id: "monad", name: "Monad", icon: "M", color: "#836EF9", explorer: "monadscan.com", chainId: 143, hexId: "0x8f", rpc: "https://rpc.monad.xyz", symbol: "MON" },
@@ -927,10 +929,16 @@ pub struct GlobalState {
         providerObj = window.phantom?.ethereum || (window.ethereum?.isPhantom ? window.ethereum : null);
       }
     } else {
+      // For MetaMask, prioritize MetaMask provider and avoid Phantom
       if (window.ethereum?.providers?.length) {
-        providerObj = window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum.providers[0];
+        providerObj = window.ethereum.providers.find(p => p.isMetaMask && !p.isPhantom) || window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum.providers[0];
       } else {
-        providerObj = window.ethereum;
+        // Check if window.ethereum is MetaMask (not Phantom)
+        providerObj = (window.ethereum?.isMetaMask && !window.ethereum?.isPhantom) ? window.ethereum : null;
+        // If not found, try to find MetaMask in providers array
+        if (!providerObj && window.ethereum?.providers) {
+          providerObj = window.ethereum.providers.find(p => p.isMetaMask && !p.isPhantom);
+        }
       }
     }
 
@@ -954,30 +962,31 @@ pub struct GlobalState {
       setWallet(accounts[0]);
       setWalletType(type);
 
-      if (target && target.rpc && target.hexId && target.id !== "solana") {
+      // Switch to the selected chain (Omega Mainnet by default)
+      if (chain && chain.rpc && chain.hexId && chain.id !== "solana") {
         // Important: Phantom EVM ONLY supports Ethereum and Polygon. 
         // Trying to switch to other networks like Omega causes an 'Unsupported network' error.
         const isPhantom = type === "phantom" || providerObj.isPhantom;
-        const phantomSupported = ["ethereum", "polygon"].includes(target.id);
+        const phantomSupported = ["ethereum", "polygon"].includes(chain.id);
 
         if (isPhantom && !phantomSupported) {
-          console.warn(`Phantom EVM does not support network: ${target.name}. Connection will proceed on whatever network the wallet is currently on.`);
+          console.warn(`Phantom EVM does not support network: ${chain.name}. Connection will proceed on whatever network the wallet is currently on.`);
         } else {
           try {
             await providerObj.request({
               method: 'wallet_switchEthereumChain',
-              params: [{ chainId: target.hexId }],
+              params: [{ chainId: chain.hexId }],
             });
           } catch (switchError) {
             if (switchError.code === 4902) {
               await providerObj.request({
                 method: 'wallet_addEthereumChain',
                 params: [{
-                  chainId: target.hexId,
-                  chainName: target.name,
-                  rpcUrls: [target.rpc],
-                  blockExplorerUrls: [target.explorer.startsWith("http") ? target.explorer : `https://${target.explorer}`],
-                  nativeCurrency: { name: target.symbol, symbol: target.symbol, decimals: 18 }
+                  chainId: chain.hexId,
+                  chainName: chain.name,
+                  rpcUrls: [chain.rpc],
+                  blockExplorerUrls: [chain.explorer.startsWith("http") ? chain.explorer : `https://${chain.explorer}`],
+                  nativeCurrency: { name: chain.symbol, symbol: chain.symbol, decimals: 18 }
                 }],
               });
             }
@@ -1131,6 +1140,9 @@ pub struct GlobalState {
 
       // Store compiled artifacts for deployment
       window.compiledArtifacts = compiledContracts;
+      
+      // Force re-render to update Copy ABI button
+      setIdeCompile("success");
 
     } catch (e) {
       console.error(e);
@@ -1259,9 +1271,22 @@ pub struct GlobalState {
         return;
       }
 
-      let providerObj = window.ethereum;
-      if (walletType === "phantom" && window.phantom?.ethereum) {
-        providerObj = window.phantom.ethereum;
+      // Use the same provider detection logic as connect() to avoid Phantom when MetaMask is selected
+      let providerObj = null;
+      if (walletType === "phantom") {
+        providerObj = window.phantom?.ethereum || (window.ethereum?.isPhantom ? window.ethereum : null);
+      } else {
+        // For MetaMask, prioritize MetaMask provider and avoid Phantom
+        if (window.ethereum?.providers?.length) {
+          providerObj = window.ethereum.providers.find(p => p.isMetaMask && !p.isPhantom) || window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum.providers[0];
+        } else {
+          // Check if window.ethereum is MetaMask (not Phantom)
+          providerObj = (window.ethereum?.isMetaMask && !window.ethereum?.isPhantom) ? window.ethereum : null;
+          // If not found, try to find MetaMask in providers array
+          if (!providerObj && window.ethereum?.providers) {
+            providerObj = window.ethereum.providers.find(p => p.isMetaMask && !p.isPhantom);
+          }
+        }
       }
       if (!providerObj) throw new Error("No wallet found");
       const provider = new ethers.BrowserProvider(providerObj);
@@ -1271,15 +1296,32 @@ pub struct GlobalState {
       if (chain.chainId && network.chainId !== BigInt(chain.chainId)) {
         setIdeConsole(p => [...p, `> ⚠ Network mismatch. Selected: ${chain.name}. Wallet: Chain ${network.chainId}.`]);
         try {
-          await window.ethereum.request({
+          // Use the correct provider (already determined above)
+          await providerObj.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: chain.hexId }],
           });
           // Brief pause for signer change
           await new Promise(r => setTimeout(r, 500));
-        } catch (e) {
-          console.warn(e);
-          throw new Error(`Please switch MetaMask to ${chain.name} (Chain ID: ${chain.chainId})`);
+        } catch (switchError) {
+          if (switchError.code === 4902) {
+            // Network doesn't exist, add it
+            await providerObj.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: chain.hexId,
+                chainName: chain.name,
+                rpcUrls: [chain.rpc],
+                blockExplorerUrls: [chain.explorer.startsWith("http") ? chain.explorer : `https://${chain.explorer}`],
+                nativeCurrency: { name: chain.symbol, symbol: chain.symbol, decimals: 18 }
+              }],
+            });
+            // Brief pause for signer change
+            await new Promise(r => setTimeout(r, 500));
+          } else {
+            console.warn(switchError);
+            throw new Error(`Please switch wallet to ${chain.name} (Chain ID: ${chain.chainId})`);
+          }
         }
       }
 
@@ -1458,7 +1500,15 @@ pub struct GlobalState {
 
         <div />
 
-        <div className="glass-pill" style={{ padding: "4px" }}>
+        <div className="glass-pill" style={{ padding: "4px", display: "flex", gap: 4 }}>
+          <button onClick={() => setView("showcase")} style={{
+            background: "transparent",
+            border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "8px 20px",
+            color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 13,
+            transition: "0.2s"
+          }} onMouseOver={e => e.target.style.background = "rgba(255,255,255,0.05)"} onMouseOut={e => e.target.style.background = "transparent"}>
+            Showreel
+          </button>
           <button onClick={() => setDocsModal(true)} style={{
             background: "#fff",
             border: "none", borderRadius: 20, padding: "8px 20px",
@@ -1909,7 +1959,23 @@ pub struct GlobalState {
           <div style={{ width: `${deployPct}%`, height: "100%", background: `linear-gradient(90deg,${accent},${accent}AA)`, borderRadius: 2, transition: "width 0.4s" }} />
         </div>
         <div style={{ background: sf, border: `1px solid ${bd}`, borderRadius: 10, padding: 14, textAlign: "left", maxHeight: 240, overflow: "auto" }}>
-          {deployLogs.map((l, i) => <div key={i} style={{ fontSize: 10, fontFamily: F, padding: "2px 0", color: l.includes("✓") || l.includes("🎉") ? "#00D395" : l.includes("→") ? accent : t2 }}>{l}</div>)}
+          {deployLogs.map((l, i) => {
+            const color = l.includes("✓") || l.includes("🎉") ? "#00D395" : l.includes("→") ? accent : t2;
+            // Check if line contains a URL
+            const urlMatch = l.match(/(https?:\/\/[^\s]+)/);
+            if (urlMatch) {
+              const url = urlMatch[1];
+              const parts = l.split(urlMatch[0]);
+              return (
+                <div key={i} style={{ fontSize: 10, fontFamily: F, padding: "2px 0", color }}>
+                  {parts[0]}
+                  <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: "#60a5fa", textDecoration: "underline", cursor: "pointer" }}>{url}</a>
+                  {parts[1]}
+                </div>
+              );
+            }
+            return <div key={i} style={{ fontSize: 10, fontFamily: F, padding: "2px 0", color }}>{l}</div>;
+          })}
           {deployPct < 100 && <div style={{ fontSize: 11, fontFamily: F, color: accent, animation: "pulse 1s infinite" }}>▌</div>}
         </div>
       </div>
@@ -2446,6 +2512,35 @@ pub struct GlobalState {
                   </button>
                   <button onClick={(e) => {
                     e.stopPropagation();
+                    const artifacts = window.compiledArtifacts;
+                    if (!artifacts || artifacts.length === 0) {
+                      setIdeConsole(p => [...p, "> ⚠ No compiled artifacts found. Please compile first."]);
+                      return;
+                    }
+                    // Get the main contract ABI (first one or match current file)
+                    const currentFile = ideFiles[ideActiveFile]?.name;
+                    const targetArtifact = artifacts.find(a => currentFile && a.fileName === currentFile) || artifacts[0];
+                    if (targetArtifact && targetArtifact.abi) {
+                      const abiJson = JSON.stringify(targetArtifact.abi, null, 2);
+                      navigator.clipboard.writeText(abiJson).then(() => {
+                        setIdeConsole(p => [...p, `> ✓ Copied ABI for ${targetArtifact.name} to clipboard.`]);
+                      }).catch(err => {
+                        setIdeConsole(p => [...p, `> ✗ Failed to copy ABI: ${err.message}`]);
+                      });
+                    } else {
+                      setIdeConsole(p => [...p, "> ✗ No ABI found in compiled artifacts."]);
+                    }
+                  }} style={{
+                    padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: ideCompile === "success" ? "pointer" : "not-allowed",
+                    background: ideCompile === "success" ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.15)", color: ideCompile === "success" ? "#fff" : "rgba(255,255,255,0.4)",
+                    display: "flex", alignItems: "center", gap: 4,
+                    opacity: ideCompile === "success" ? 1 : 0.5
+                  }}>
+                    Copy ABI
+                  </button>
+                  <button onClick={(e) => {
+                    e.stopPropagation();
                     if (!wallet) { connect(); return; }
                     deploy();
                   }} style={{
@@ -2460,7 +2555,23 @@ pub struct GlobalState {
               </div>
               {consoleExpanded && (
                 <div style={{ flex: 1, overflow: "auto", padding: "8px 16px" }}>
-                  {ideConsole.map((l, i) => <div key={i} style={{ fontSize: 11, fontFamily: F, color: l.includes("✓") ? "#4ade80" : l.includes("Error") || l.includes("✗") ? "#fecaca" : l.includes("⚠") ? "#fdedc9" : "rgba(255,255,255,0.7)", padding: "2px 0" }}>{l}</div>)}
+                  {ideConsole.map((l, i) => {
+                    const color = l.includes("✓") ? "#4ade80" : l.includes("Error") || l.includes("✗") ? "#fecaca" : l.includes("⚠") ? "#fdedc9" : "rgba(255,255,255,0.7)";
+                    // Check if line contains a URL
+                    const urlMatch = l.match(/(https?:\/\/[^\s]+)/);
+                    if (urlMatch) {
+                      const url = urlMatch[1];
+                      const parts = l.split(urlMatch[0]);
+                      return (
+                        <div key={i} style={{ fontSize: 11, fontFamily: F, color, padding: "2px 0" }}>
+                          {parts[0]}
+                          <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: "#60a5fa", textDecoration: "underline", cursor: "pointer" }}>{url}</a>
+                          {parts[1]}
+                        </div>
+                      );
+                    }
+                    return <div key={i} style={{ fontSize: 11, fontFamily: F, color, padding: "2px 0" }}>{l}</div>;
+                  })}
                 </div>
               )}
             </div>
@@ -2469,6 +2580,9 @@ pub struct GlobalState {
       </div >
     );
   }
+
+  // ━━━ SHOWCASE ━━━
+  if (view === "showcase") return <Showcase onComplete={() => setView("home")} />;
 
   return null;
 }
