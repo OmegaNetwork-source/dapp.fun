@@ -1657,7 +1657,7 @@ pub struct GlobalState {
                   <p style={{ marginBottom: 20 }}>Dapp.Fun provides a powerful REST API for developers to programmatically deploy smart contracts. This is specifically designed for integration into bots, AI agents, and custom deployment pipelines.</p>
 
                   <div style={{ padding: "12px 16px", background: "rgba(41, 151, 255, 0.1)", borderLeft: "4px solid #2997FF", borderRadius: 4, marginBottom: 24 }}>
-                    <div style={{ fontWeight: 600, color: "#fff", fontSize: 14 }}>Default Endpoint: <span style={{ fontFamily: F, color: "#2997FF" }}>http://localhost:3001</span></div>
+                    <div style={{ fontWeight: 600, color: "#fff", fontSize: 14 }}>Default Endpoint: <span style={{ fontFamily: F, color: "#2997FF" }}>https://dapp-fun-api.onrender.com</span></div>
                   </div>
 
                   <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12, color: "#fff" }}>For Developers & Users</h3>
