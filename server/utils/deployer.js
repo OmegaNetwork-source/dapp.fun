@@ -21,14 +21,14 @@ import bs58 from 'bs58';
 
 dotenv.config();
 
-export async function deployEVM(artifact, rpcUrl, privateKey, constructorArgs = []) {
+export async function deployEVM(artifact, rpcUrl, privateKey, constructorArgs = [], options = {}) {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
     const wallet = new ethers.Wallet(privateKey, provider);
 
-    console.log(`Deploying ${artifact.name} to EVM chain...`);
+    console.log(`Deploying ${artifact.name} to ${rpcUrl}...`);
 
     const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, wallet);
-    const contract = await factory.deploy(...constructorArgs, { gasPrice: 0 });
+    const contract = await factory.deploy(...constructorArgs, options);
 
     await contract.waitForDeployment();
     const address = await contract.getAddress();

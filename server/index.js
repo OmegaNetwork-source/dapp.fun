@@ -85,7 +85,10 @@ app.post('/deploy', async (req, res) => {
         const rpcUrl = req.body.rpcUrl || chains[chainId] || process.env.DEFAULT_RPC;
         if (!rpcUrl) return res.status(400).json({ error: 'Invalid chainId or RPC URL' });
 
-        const result = await deployEVM(targetArtifact, rpcUrl, pk, constructorArgs || []);
+        // Set gasless options only for Omega Networks
+        const deployOptions = (chainId && chainId.startsWith('omega')) ? { gasPrice: 0 } : {};
+
+        const result = await deployEVM(targetArtifact, rpcUrl, pk, constructorArgs || [], deployOptions);
         const explorerBase = explorerBases[chainId];
         const explorerUrl = explorerBase ? `https://${explorerBase}/tx/${result.hash}` : null;
 
