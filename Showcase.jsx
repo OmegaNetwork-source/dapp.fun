@@ -1,28 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Showcase = ({ onComplete }) => {
-    const [scene, setScene] = useState('intro'); // intro, coding, success, compare, final
-    const [progress, setProgress] = useState(0);
+    const [scene, setScene] = useState('intro'); // intro, agent, api, hype, final
     const [codeText, setCodeText] = useState("");
-    const targetCode = `// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
-
-contract AlphaProtocol {
-    string public name = "Alpha";
-    uint256 public supply = 1000000;
-    
-    function launch() public {
-        // Broadcast to Omega...
-    }
+    const targetCode = `// AI Agent Request
+POST https://api.dapp.fun/deploy
+{
+  "agent": "OpenClaw-v1",
+  "task": "Deploy Yield Vault",
+  "chain": "Omega-Mainnet",
+  "status": "Broadcasting..."
 }`;
 
-    // Time-based scene control
     useEffect(() => {
         let timer;
         if (scene === 'intro') {
-            timer = setTimeout(() => setScene('coding'), 3500);
-        } else if (scene === 'coding') {
-            // Typewriter effect
+            timer = setTimeout(() => setScene('agent'), 3000);
+        } else if (scene === 'agent') {
+            timer = setTimeout(() => setScene('api'), 4000);
+        } else if (scene === 'api') {
             let charIndex = 0;
             const typeInterval = setInterval(() => {
                 if (charIndex < targetCode.length) {
@@ -30,27 +26,21 @@ contract AlphaProtocol {
                     charIndex++;
                 } else {
                     clearInterval(typeInterval);
-                    setTimeout(() => setScene('success'), 2000);
+                    setTimeout(() => setScene('hype'), 2000);
                 }
-            }, 25);
+            }, 30);
             return () => clearInterval(typeInterval);
-        } else if (scene === 'success') {
-            timer = setTimeout(() => setScene('compare'), 4500);
-        } else if (scene === 'compare') {
-            timer = setTimeout(() => setScene('final'), 6000);
+        } else if (scene === 'hype') {
+            timer = setTimeout(() => setScene('final'), 4500);
         }
         return () => clearTimeout(timer);
     }, [scene]);
 
-    // Styles
     const S = {
-        bg: "#050505",
-        silver: "#C0C0C0",
-        white: "#FFFFFF",
-        accent: "rgba(255,255,255,0.1)",
-        border: "rgba(255,255,255,0.08)",
-        panel: "#0a0a0a",
-        fontMain: "'Inter', sans-serif",
+        bg: "#020202",
+        accent: "#FF4D4D", // OpenClaw Red
+        glow: "rgba(255, 77, 77, 0.4)",
+        fontMain: "'Outfit', sans-serif",
         fontMono: "'JetBrains Mono', monospace"
     };
 
@@ -62,180 +52,395 @@ contract AlphaProtocol {
 
     return (
         <div style={containerStyle}>
-            {/* Dynamic Background */}
-            <div className="showcase-glow" style={{ position: "absolute", width: "100%", height: "100%", background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.02) 0%, transparent 70%)", pointerEvents: "none" }} />
+            {/* Ambient Background Elements */}
+            <div className="noise-bg" />
+            <div style={{
+                position: "absolute", inset: 0,
+                background: `radial-gradient(circle at center, ${S.glow} 0%, transparent 60%)`,
+                opacity: scene === 'agent' || scene === 'hype' ? 0.15 : 0.05,
+                transition: "opacity 2s ease"
+            }} />
 
-            {/* Intro Scene */}
+            {/* INTRO SCENE: The Vision */}
             {scene === 'intro' && (
-                <div className="fade-in" style={{ textAlign: "center", zIndex: 10 }}>
-                    <div className="logo-pulse" style={{ fontSize: 80, fontWeight: 900, letterSpacing: "-4px", marginBottom: 20 }}>DAPP.FUN</div>
-                    <div style={{ fontSize: 24, fontWeight: 300, color: "rgba(255,255,255,0.5)", letterSpacing: "8px", textTransform: "uppercase" }}>High-Performance IDE</div>
-                    <div className="line-grow" style={{ height: 1, width: 200, background: "rgba(255,255,255,0.2)", margin: "40px auto" }} />
-                    <div className="blur-in" style={{ fontSize: 18, color: S.silver }}>Deploy Smart Contracts <b>10x Faster</b></div>
+                <div className="scene-container intro-content">
+                    <div className="label-top">EST. 2026</div>
+                    <h1 className="hero-text">
+                        <span className="gradient-text">FUTURE OF</span><br />
+                        BLOCKCHAIN INFRA
+                    </h1>
+                    <div className="line-animate" />
+                    <p className="sub-hero">THE INFRASTRUCTURE FOR THE AGENTIC AGE.</p>
                 </div>
             )}
 
-            {/* Coding Scene (Actual Product Showcase) */}
-            {scene === 'coding' && (
-                <div className="slide-up" style={{ width: "95%", height: "85%", maxWidth: 1400, border: `1px solid ${S.border}`, background: "#080808", borderRadius: 24, overflow: "hidden", zIndex: 10, display: "flex", flexDirection: "column", boxShadow: "0 50px 100px rgba(0,0,0,0.8)" }}>
-                    {/* Mock TopBar */}
-                    <div style={{ padding: "12px 24px", background: "#0c0c0c", borderBottom: `1px solid ${S.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                            <div style={{ display: "flex", gap: 6 }}>
-                                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ff5f56" }} />
-                                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ffbd2e" }} />
-                                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#27c93f" }} />
-                            </div>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.4)" }}>DappForge Workspace</span>
+            {/* AGENT SCENE: The Professional AI */}
+            {scene === 'agent' && (
+                <div className="scene-container">
+                    <div className="agent-ui-box">
+                        <div className="ui-header">
+                            <span className="dot" />
+                            <span className="ui-title">OPENCLAW TERMINAL v2.0</span>
                         </div>
-                        <div style={{ padding: "6px 16px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: `1px solid ${S.border}`, fontSize: 11, color: "#fff", fontWeight: 700 }}>Network: Omega Mainnet</div>
-                    </div>
-
-                    <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-                        {/* Mock Sidebar */}
-                        <div style={{ width: 240, borderRight: `1px solid ${S.border}`, padding: 20, background: "#090909" }}>
-                            <div style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 20 }}>Workspace Files</div>
-                            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 12 }}>📁 contracts</div>
-                            <div style={{ fontSize: 13, color: "#fff", padding: "8px 12px", background: "rgba(255,255,255,0.05)", borderRadius: 8, marginLeft: 12 }}>📄 AlphaProtocol.sol</div>
-                            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginTop: 12 }}>📁 scripts</div>
-                            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginTop: 12 }}>📁 tests</div>
-                        </div>
-
-                        {/* Main Editor Body */}
-                        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                            <div style={{ flex: 1, padding: 40, fontFamily: S.fontMono, fontSize: 15, lineHeight: 1.6, color: "#ccc", background: "#060606", position: "relative" }}>
-                                <pre style={{ margin: 0 }}>{codeText}<span className="cursor">|</span></pre>
-
-                                {codeText.length > targetCode.length - 10 && (
-                                    <div className="compile-badge" style={{ position: "absolute", bottom: 40, right: 40, padding: "16px 32px", background: "#fff", color: "#000", fontWeight: 900, fontSize: 14, borderRadius: 14, boxShadow: "0 10px 40px rgba(255,255,255,0.2)", display: "flex", alignItems: "center", gap: 8 }}>
-                                        ✓ COMPILED SUCCESS
-                                    </div>
-                                )}
+                        <div className="ui-body chat-mode">
+                            <div className="chat-msg user">
+                                <span className="pfp">👤</span>
+                                <div className="bubble">"Can you deploy a DEX for me on all EVM networks?"</div>
                             </div>
-
-                            {/* Mock Console */}
-                            <div style={{ height: 160, background: "#0a0a0a", borderTop: `1px solid ${S.border}`, padding: "20px 24px", fontFamily: S.fontMono, fontSize: 12 }}>
-                                <div style={{ color: "rgba(255,255,255,0.3)", marginBottom: 8, fontWeight: 800 }}>TERMINAL</div>
-                                {codeText.length > 50 && <div style={{ color: "#4ade80" }}>[system] Optimization cycle complete.</div>}
-                                {codeText.length > 100 && <div style={{ color: "rgba(255,255,255,0.6)" }}>[solc] Generating bytecode for AlphaProtocol...</div>}
-                                {codeText.length > targetCode.length - 20 && <div style={{ color: "#fff", fontWeight: 700 }}>[deploy] Ready for broadcast to Omega Network.</div>}
+                            <div className="chat-msg agent fade-in-delayed">
+                                <span className="pfp">🦞</span>
+                                <div className="bubble">"Sure! Deploying now..."</div>
                             </div>
-                        </div>
-
-                        {/* Mock Protocol Inspector (Right Column) */}
-                        <div style={{ width: 320, background: "#080808", borderLeft: `1px solid ${S.border}`, padding: 30 }}>
-                            <div style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: "2px", marginBottom: 30 }}>Protocol Manifest</div>
-
-                            <div style={{ padding: 20, borderRadius: 16, background: "rgba(255,255,255,0.02)", border: `1px solid ${S.border}`, marginBottom: 24 }}>
-                                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>Resource Estimate</div>
-                                <div style={{ fontSize: 28, fontWeight: 800 }}>1.2M <span style={{ fontSize: 14, color: "rgba(255,255,255,0.2)" }}>Gas</span></div>
-                            </div>
-
-                            <div style={{ padding: 20, borderRadius: 16, background: "rgba(255,255,255,0.02)", border: `1px solid ${S.border}` }}>
-                                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 12 }}>Security Standards</div>
-                                <div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>🛡️ OpenZeppelin Verified</div>
-                                <div style={{ color: "#fff", fontSize: 13, fontWeight: 600, marginTop: 8 }}>🛡️ Reentrancy Guards Active</div>
+                            <div className="deployment-log-mini">
+                                <div className="log-line">→ OMEGA: <span className="green">DEPLOYED</span></div>
+                                <div className="log-line">→ BASE: <span className="green">DEPLOYED</span></div>
+                                <div className="log-line">→ ETHEREUM: <span className="green">DEPLOYED</span></div>
+                                <div className="log-line">→ MONAD: <span className="green">DEPLOYING...</span></div>
                             </div>
                         </div>
                     </div>
+                    <h2 className="scene-title">OPENCLAW <span style={{ color: S.accent }}>READY</span></h2>
+                    <p className="scene-desc">Dapp.Fun API powers the world's most capable AI Agents.</p>
                 </div>
             )}
 
-            {/* Success Scene */}
-            {scene === 'success' && (
-                <div className="zoom-in" style={{ textAlign: "center", zIndex: 10 }}>
-                    <div className="success-icon" style={{ width: 140, height: 140, borderRadius: "50%", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 40px", boxShadow: "0 0 50px rgba(255,255,255,0.2)" }}>
-                        <div style={{ fontSize: 80 }}>✓</div>
-                    </div>
-                    <h2 style={{ fontSize: 56, fontWeight: 900, marginBottom: 16, letterSpacing: "-2px" }}>Deployment Broadcasted</h2>
-                    <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 24, fontWeight: 300 }}>Instantiated on <b>Omega Network</b> Mainnet</p>
+            {/* API SCENE: The Infrastructure HUB */}
+            {scene === 'api' && (
+                <div className="scene-container api-visual-hub">
+                    <div className="hub-wrapper">
+                        <div className="central-core">
+                            <div className="core-inner">
+                                <span className="api-text">API</span>
+                                <div className="core-glow" />
+                            </div>
+                            <div className="orbit-ring r1" />
+                            <div className="orbit-ring r2" />
+                            <div className="orbit-ring r3" />
+                        </div>
 
-                    <div style={{ marginTop: 50, padding: "24px 48px", background: "rgba(255,255,255,0.03)", border: `1px solid ${S.border}`, borderRadius: 24, display: "inline-block", textAlign: "left" }}>
-                        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginBottom: 8, letterSpacing: "1px" }}>TRANSACTION HASH</div>
-                        <div style={{ fontFamily: S.fontMono, fontSize: 18, color: S.silver }}>0x8f2c73eb...b4c1a4e1a</div>
+                        <div className="network-nodes">
+                            {['OMEGA', 'SOLANA', 'BASE', 'ETHEREUM', 'MONAD', 'SOMNIA'].map((name, i) => (
+                                <div key={name} className={`node n${i}`}>
+                                    <div className="node-dot" />
+                                    <span className="node-name">{name}</span>
+                                    <div className="data-beam" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="api-highlights">
+                        <h2 className="api-title">GLOBAL <span className="shiny-text">INFRASTRUCTURE</span></h2>
+                        <p className="api-subtitle">One Unified Endpoint. Unlimited Scalability.</p>
+                        <div className="endpoint-pill">https://api.dapp.fun/v1/deploy</div>
                     </div>
                 </div>
             )}
 
-            {/* Comparison Scene (Updated Reasons) */}
-            {scene === 'compare' && (
-                <div className="fade-in" style={{ width: "90%", maxWidth: 1200, zIndex: 10 }}>
-                    <h2 style={{ fontSize: 44, fontWeight: 900, textAlign: "center", marginBottom: 70, letterSpacing: "-1.5px" }}>Why Builders Choose Dapp.Fun</h2>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, alignItems: "start" }}>
-                        <div style={{ padding: 48, background: "rgba(255,255,255,0.01)", border: `1px solid ${S.border}`, borderRadius: 40, opacity: 0.6 }}>
-                            <h3 style={{ fontSize: 24, color: "rgba(255,255,255,0.3)", marginBottom: 40, fontWeight: 800 }}>Others (Legacy Tools)</h3>
-                            <div style={{ display: "flex", flexDirection: "column", gap: 24, fontSize: 17 }}>
-                                <div style={{ color: "rgba(255,255,255,0.3)" }}>- Fragmented cross-chain workflow</div>
-                                <div style={{ color: "rgba(255,255,255,0.3)" }}>- Manual contract boilerplate</div>
-                                <div style={{ color: "rgba(255,255,255,0.3)" }}>- Dated, confusing interfaces</div>
-                                <div style={{ color: "rgba(255,255,255,0.3)" }}>- No semantic understanding of code</div>
-                                <div style={{ color: "rgba(255,255,255,0.3)" }}>- Painful bridge/deployment setup</div>
-                            </div>
+            {/* HYPE SCENE: The Impact */}
+            {scene === 'hype' && (
+                <div className="scene-container hype-content">
+                    <div className="hype-grid">
+                        <div className="hype-card c1">
+                            <h3>INSTANT</h3>
+                            <p>EVM & Solana Deployment</p>
                         </div>
-
-                        <div style={{ padding: 48, background: "rgba(255,255,255,0.05)", border: `1px solid rgba(255,255,255,0.2)`, borderRadius: 40, position: "relative", transform: "scale(1.05)", boxShadow: "0 40px 100px rgba(0,0,0,0.6)" }}>
-                            <div style={{ position: "absolute", top: 24, right: 32, background: "#fff", color: "#000", fontSize: 11, fontWeight: 900, padding: "6px 14px", borderRadius: 20 }}>INDUSTRIAL GRADE</div>
-                            <h3 style={{ fontSize: 28, color: "#fff", marginBottom: 40, fontWeight: 900 }}>Dapp.Fun</h3>
-                            <div style={{ display: "flex", flexDirection: "column", gap: 24, fontSize: 18 }}>
-                                <div style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 12 }}><span>✓</span> Pre-built Industry Templates</div>
-                                <div style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 12 }}><span>✓</span> Native Network Integration</div>
-                                <div style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 12 }}><span>✓</span> Solana Token Deployment</div>
-                                <div style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 12 }}><span>✓</span> Solidity to Rust Translator</div>
-                                <div style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 12 }}><span>✓</span> Ease of Use AI Core</div>
-                            </div>
+                        <div className="hype-card c2 highlight">
+                            <h3>HEADLESS</h3>
+                            <p>Build with AI Logic</p>
+                        </div>
+                        <div className="hype-card c3">
+                            <h3>FREE</h3>
+                            <p>Omega Gasless Infra</p>
                         </div>
                     </div>
+                    <h2 className="hype-main">ANYTHING. ANYWHERE. <span className="flash-text">NOW.</span></h2>
                 </div>
             )}
 
-            {/* Final Scene */}
+            {/* FINAL SCENE: Call to action */}
             {scene === 'final' && (
-                <div className="fade-in" style={{ textAlign: "center", zIndex: 10 }}>
-                    <div style={{ fontSize: 72, fontWeight: 900, marginBottom: 24, letterSpacing: "-3px", lineHeight: 1 }}>Build Smarter.<br />Launch Absolute.</div>
-                    <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 22, marginBottom: 50, fontWeight: 300 }}>The silver standard for protocol engineering.</p>
-
-                    <button onClick={() => onComplete()} className="cta-btn" style={{
-                        padding: "24px 60px", borderRadius: 60, background: "#fff", border: "none", color: "#000", fontWeight: 900,
-                        fontSize: 20, cursor: "pointer", boxShadow: "0 20px 50px rgba(255,255,255,0.3)"
-                    }}>
-                        Enter the Workspace
+                <div className="scene-container final-content">
+                    <div className="final-logo">DAPP.FUN</div>
+                    <h1 className="final-headline">BUILD SMARTER.<br />LAUNCH WITH AI.</h1>
+                    <button className="launch-button" onClick={onComplete}>
+                        GET API KEY
+                        <div className="btn-glow" />
                     </button>
+                    <div className="powered-by">POWERING OPENCLAW & AI AGENTIC AGE</div>
                 </div>
             )}
 
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
-                
-                .fade-in { animation: fadeIn 1.2s ease forwards; }
-                .slide-up { animation: slideUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-                .zoom-in { animation: zoomIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-                .blur-in { animation: blurIn 2s ease forwards; }
-                
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes slideUp { from { opacity: 0; transform: translateY(60px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-                @keyframes zoomIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
-                @keyframes blurIn { from { opacity: 0; filter: blur(30px); } to { opacity: 1; filter: blur(0); } }
-                
-                .logo-pulse {
-                    background: linear-gradient(to bottom, #fff, rgba(255,255,255,0.3));
+                @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;900&family=JetBrains+Mono&display=swap');
+
+                .scene-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                    width: 100%;
+                    max-width: 1200px;
+                    animation: sceneIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+                }
+
+                @keyframes sceneIn {
+                    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+                    to { opacity: 1; transform: translateY(0) scale(1); }
+                }
+
+                .hero-text {
+                    font-size: 8vw;
+                    line-height: 0.9;
+                    font-weight: 900;
+                    letter-spacing: -4px;
+                    margin: 20px 0;
+                }
+
+                .gradient-text {
+                    background: linear-gradient(to right, #fff, #666);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
-                    animation: pulse 4s infinite;
                 }
-                @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.02); opacity: 1; } }
-                
-                .line-grow { animation: grow 1.5s cubic-bezier(0.65, 0, 0.35, 1) forwards; }
-                @keyframes grow { from { width: 0; } to { width: 300px; } }
-                
-                .cursor { animation: blink 1s step-end infinite; background: #fff; width: 2px; height: 1.2em; display: inline-block; vertical-align: middle; margin-left: 2px; }
-                @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-                
-                .success-icon { animation: successPulse 2s infinite; }
-                @keyframes successPulse { 0%, 100% { box-shadow: 0 0 40px rgba(255,255,255,0.2); } 50% { box-shadow: 0 0 70px rgba(255,255,255,0.4); } }
 
-                .cta-btn:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 30px 70px rgba(255,255,255,0.4); }
-                .cta-btn { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+                .sub-hero {
+                    font-size: 14px;
+                    letter-spacing: 6px;
+                    color: rgba(255,255,255,0.4);
+                    margin-top: 20px;
+                }
+
+                /* New Agent UI */
+                .agent-ui-box {
+                    width: 400px;
+                    border: 1px solid rgba(255, 77, 77, 0.2);
+                    border-radius: 12px;
+                    background: #111;
+                    overflow: hidden;
+                    margin-bottom: 40px;
+                    box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+                }
+                .ui-header {
+                    background: #1a1a1a;
+                    padding: 8px 16px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
+                }
+                .ui-header .dot { width: 6px; height: 6px; background: #FF4D4D; border-radius: 50%; box-shadow: 0 0 10px #FF4D4D; }
+                .ui-title { font-size: 10px; font-family: ${S.fontMono}; color: #666; letter-spacing: 2px; }
+                .ui-body.chat-mode { 
+                    padding: 24px; 
+                    flex-direction: column; 
+                    align-items: flex-start;
+                    gap: 16px; 
+                }
+                .chat-msg { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 8px; width: 100%; text-align: left; }
+                .chat-msg.user { flex-direction: row; }
+                .chat-msg.agent { flex-direction: row; }
+                .pfp { width: 28px; height: 28px; background: #222; border-radius: 50%; display: flex; alignItems: center; justifyContent: center; font-size: 14px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); }
+                .bubble { 
+                    padding: 10px 16px; 
+                    border-radius: 12px; 
+                    background: rgba(255,255,255,0.05); 
+                    font-size: 13px; 
+                    line-height: 1.4;
+                    max-width: 80%;
+                }
+                .chat-msg.user .bubble { border-bottom-left-radius: 2px; }
+                .chat-msg.agent .bubble { background: rgba(255, 77, 77, 0.1); border: 1px solid rgba(255, 77, 77, 0.2); border-bottom-left-radius: 2px; }
+                
+                .deployment-log-mini {
+                    width: 100%;
+                    padding: 12px;
+                    background: #000;
+                    border-radius: 8px;
+                    font-family: ${S.fontMono};
+                    font-size: 10px;
+                    text-align: left;
+                    margin-top: 8px;
+                    border: 1px solid rgba(255,255,255,0.05);
+                }
+                .log-line { margin-bottom: 4px; color: rgba(255,255,255,0.4); }
+                .green { color: #4ade80; font-weight: 900; }
+                .fade-in-delayed { animation: sceneIn 0.5s ease 1s forwards; opacity: 0; }
+
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+                .scene-title { font-size: 60px; font-weight: 900; letter-spacing: -2px; margin-bottom: 10px; }
+                .scene-desc { font-size: 20px; color: rgba(255,255,255,0.6); }
+
+                .status-badge {
+                    margin-top: 30px;
+                    padding: 8px 16px;
+                    background: rgba(255, 77, 77, 0.1);
+                    border: 1px solid ${S.accent};
+                    border-radius: 4px;
+                    font-size: 12px;
+                    font-family: ${S.fontMono};
+                    color: ${S.accent};
+                    text-transform: uppercase;
+                }
+
+                /* API HUB Visualization */
+                .api-visual-hub { perspective: 1000px; }
+                .hub-wrapper {
+                    position: relative;
+                    width: 500px;
+                    height: 500px;
+                    margin-bottom: 60px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .central-core {
+                    width: 120px;
+                    height: 120px;
+                    background: rgba(255, 77, 77, 0.1);
+                    border: 1px solid rgba(255, 77, 77, 0.4);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    position: relative;
+                    z-index: 10;
+                    box-shadow: 0 0 50px rgba(255, 77, 77, 0.3);
+                }
+                .core-inner { font-weight: 900; font-size: 24px; letter-spacing: 2px; position: relative; }
+                .core-glow {
+                    position: absolute;
+                    inset: -20px;
+                    background: radial-gradient(circle, rgba(255, 77, 77, 0.4) 0%, transparent 70%);
+                    animation: pulse 2s ease-in-out infinite;
+                }
+                .orbit-ring {
+                    position: absolute;
+                    border: 1px solid rgba(255,255,255,0.05);
+                    border-radius: 50%;
+                }
+                .r1 { inset: -40px; }
+                .r2 { inset: -80px; }
+                .r3 { inset: -120px; }
+
+                .node {
+                    position: absolute;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .node-dot { width: 10px; height: 10px; background: #fff; border-radius: 50%; box-shadow: 0 0 15px #fff; }
+                .node-name { font-size: 10px; font-weight: 900; opacity: 0.5; letter-spacing: 1px; }
+
+                /* Node Positions */
+                .n0 { top: 0; left: 50%; transform: translateX(-50%); }
+                .n1 { top: 25%; right: 0; }
+                .n2 { bottom: 25%; right: 0; }
+                .n3 { bottom: 0; left: 50%; transform: translateX(-50%); }
+                .n4 { bottom: 25%; left: 0; }
+                .n5 { top: 25%; left: 0; }
+
+                .data-beam {
+                    position: absolute;
+                    width: 2px;
+                    height: 100px;
+                    background: linear-gradient(to bottom, transparent, rgba(255, 77, 77, 0.8), transparent);
+                    top: 50%;
+                    left: 50%;
+                    transform-origin: top center;
+                    animation: beamFlow 3s linear infinite;
+                    opacity: 0;
+                }
+
+                @keyframes beamFlow {
+                    0% { transform: translateY(-50%) scaleY(0); opacity: 0; }
+                    50% { opacity: 1; }
+                    100% { transform: translateY(50%) scaleY(1); opacity: 0; }
+                }
+
+                .shiny-text {
+                    background: linear-gradient(to bottom, #fff, #999);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
+                .endpoint-pill {
+                    margin-top: 24px;
+                    padding: 12px 24px;
+                    background: rgba(255,255,255,0.05);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 40px;
+                    font-family: ${S.fontMono};
+                    font-size: 14px;
+                    color: rgba(255,255,255,0.6);
+                }
+
+                /* Hype Grid */
+                .hype-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 24px;
+                    margin-bottom: 60px;
+                    width: 100%;
+                }
+                .hype-card {
+                    padding: 40px;
+                    background: rgba(255,255,255,0.02);
+                    border: 1px solid rgba(255,255,255,0.05);
+                    border-radius: 24px;
+                    text-align: left;
+                }
+                .hype-card.highlight {
+                    background: rgba(255, 77, 77, 0.05);
+                    border: 1px solid rgba(255, 77, 77, 0.2);
+                }
+                .hype-card h3 { font-size: 12px; letter-spacing: 2px; color: ${S.accent}; margin-bottom: 10px; }
+                .hype-card p { font-size: 24px; font-weight: 600; line-height: 1.2; }
+
+                .hype-main { font-size: 72px; font-weight: 900; letter-spacing: -3px; }
+                .flash-text { animation: flash 1s ease infinite alternate; color: ${S.accent}; }
+                @keyframes flash { from { opacity: 0.3; } to { opacity: 1; } }
+
+                /* Final */
+                .final-logo { font-size: 24px; font-weight: 900; letter-spacing: 8px; color: ${S.accent}; margin-bottom: 30px; }
+                .final-headline { font-size: 80px; font-weight: 900; letter-spacing: -4px; margin-bottom: 50px; }
+                .launch-button {
+                    padding: 24px 80px;
+                    border-radius: 12px;
+                    background: ${S.accent};
+                    border: none;
+                    color: #fff;
+                    font-size: 20px;
+                    font-weight: 900;
+                    cursor: pointer;
+                    position: relative;
+                    transition: transform 0.2s;
+                }
+                .launch-button:hover { transform: scale(1.05); }
+                .btn-glow {
+                    position: absolute;
+                    inset: -10px;
+                    background: ${S.accent};
+                    filter: blur(20px);
+                    opacity: 0.3;
+                    z-index: -1;
+                }
+                .powered-by {
+                    margin-top: 40px;
+                    font-size: 11px;
+                    letter-spacing: 3px;
+                    color: rgba(255,255,255,0.2);
+                    text-transform: uppercase;
+                }
+
+                .noise-bg {
+                    position: absolute;
+                    inset: 0;
+                    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+                    opacity: 0.05;
+                    pointer-events: none;
+                }
             `}</style>
         </div>
     );
