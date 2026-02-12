@@ -1140,7 +1140,7 @@ pub struct GlobalState {
 
       // Store compiled artifacts for deployment
       window.compiledArtifacts = compiledContracts;
-      
+
       // Force re-render to update Copy ABI button
       setIdeCompile("success");
 
@@ -1534,6 +1534,7 @@ pub struct GlobalState {
                 { id: "audits", label: "Security & Audits" },
                 { id: "projects", label: "Who Uses These" },
                 { id: "technical", label: "Technical Details" },
+                { id: "api", label: "API Reference" },
                 { id: "license", label: "License" },
               ].map(item => (
                 <button key={item.id} onClick={() => setDocsSection(item.id)} style={{
@@ -1647,6 +1648,59 @@ pub struct GlobalState {
                   </ul>
                   <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12, color: "#fff" }}>Wallet Support</h3>
                   <p>MetaMask, WalletConnect, Coinbase Wallet, and any injected Web3 provider via ethers.js v6.</p>
+                </div>
+              </>}
+
+              {docsSection === "api" && <>
+                <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 16, letterSpacing: "-1px" }}>Dapp.Fun API</h2>
+                <div style={{ color: "rgba(255,255,255,0.7)", lineHeight: 1.8 }}>
+                  <p style={{ marginBottom: 20 }}>Dapp.Fun provides a powerful REST API for developers to programmatically deploy smart contracts. This is specifically designed for integration into bots, AI agents, and custom deployment pipelines.</p>
+
+                  <div style={{ padding: "12px 16px", background: "rgba(41, 151, 255, 0.1)", borderLeft: "4px solid #2997FF", borderRadius: 4, marginBottom: 24 }}>
+                    <div style={{ fontWeight: 600, color: "#fff", fontSize: 14 }}>Default Endpoint: <span style={{ fontFamily: F, color: "#2997FF" }}>http://localhost:3001</span></div>
+                  </div>
+
+                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12, color: "#fff" }}>For Developers & Users</h3>
+                  <p style={{ marginBottom: 16 }}>Deploy any Solidity or Solana contract programmatically with your own configuration.</p>
+                  <div style={{ background: "#0a0a0a", borderRadius: 12, padding: 20, marginBottom: 24, border: "1px solid rgba(255,255,255,0.1)", position: "relative" }}>
+                    <div style={{ position: "absolute", top: 12, right: 12, fontSize: 10, color: "rgba(255,255,255,0.3)", textTransform: "uppercase" }}>POST /deploy</div>
+                    <pre style={{ fontSize: 13, color: "#e0e0e0", fontFamily: F, margin: 0, overflow: "auto" }}>{`{
+  "chainId": "omega-testnet",
+  "config": {
+    "name": "My Custom Contract",
+    "symbol": "MCC"
+  },
+  "sources": {
+    "Contract.sol": { "content": "..." }
+  },
+  "privateKey": "0x..."
+}`}</pre>
+                  </div>
+
+                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12, color: "#fff" }}>For Bots & AI Agents</h3>
+                  <p style={{ marginBottom: 16 }}>AI Agents can use Dapp.Fun as a deployment infrastructure. Simply pass the generated Solidity code and target chain.</p>
+                  <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 16, padding: 20, border: "1px solid rgba(255,255,255,0.1)" }}>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF5F57" }}></div>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FEBC2E" }}></div>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#28C840" }}></div>
+                    </div>
+                    <code style={{ fontSize: 12, color: "#56B6C2", fontFamily: F }}>
+                      // 🤖 Logic: "Hey Agent, deploy a token on Omega Chain"<br />
+                      const res = await axios.post('/deploy', &#123;<br />
+                      &nbsp;&nbsp;chainId: 'omega-mainnet',<br />
+                      &nbsp;&nbsp;sources: &#123; "Token.sol": &#123; content: aiGeneratedCode &#125; &#125;<br />
+                      &#125;);<br />
+                      console.log("Live at:", res.data.result.explorerUrl);
+                    </code>
+                  </div>
+
+                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12, marginTop: 32, color: "#fff" }}>Features</h3>
+                  <ul style={{ paddingLeft: 20 }}>
+                    <li><strong style={{ color: "#fff" }}>Auto-Imports</strong>: Resolves OpenZeppelin dependencies automatically.</li>
+                    <li><strong style={{ color: "#fff" }}>Cross-Chain</strong>: Unified API for both EVM and Solana.</li>
+                    <li><strong style={{ color: "#fff" }}>Optimizer</strong>: Automatically enables Solidity optimizer (200 runs).</li>
+                  </ul>
                 </div>
               </>}
 
