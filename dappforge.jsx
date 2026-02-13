@@ -1654,53 +1654,92 @@ pub struct GlobalState {
               {docsSection === "api" && <>
                 <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 16, letterSpacing: "-1px" }}>Dapp.Fun API</h2>
                 <div style={{ color: "rgba(255,255,255,0.7)", lineHeight: 1.8 }}>
-                  <p style={{ marginBottom: 20 }}>Dapp.Fun provides a powerful REST API for developers to programmatically deploy smart contracts. This is specifically designed for integration into bots, AI agents, and custom deployment pipelines.</p>
+                  <p style={{ marginBottom: 20 }}>Dapp.Fun provides a powerful REST API designed for <strong>AI Agents</strong> and bots to programmatically compile and deploy smart contracts to any EVM chain.</p>
 
-                  <div style={{ padding: "12px 16px", background: "rgba(41, 151, 255, 0.1)", borderLeft: "4px solid #2997FF", borderRadius: 4, marginBottom: 24 }}>
-                    <div style={{ fontWeight: 600, color: "#fff", fontSize: 14 }}>Default Endpoint: <span style={{ fontFamily: F, color: "#2997FF" }}>https://dapp-fun-api.onrender.com</span></div>
+                  <div style={{ padding: "16px", background: "rgba(41, 151, 255, 0.1)", borderLeft: "4px solid #2997FF", borderRadius: 4, marginBottom: 32 }}>
+                    <div style={{ fontWeight: 600, color: "#fff", fontSize: 14, marginBottom: 4 }}>Production Endpoint</div>
+                    <div style={{ fontFamily: F, color: "#2997FF", fontSize: 13 }}>https://dapp-fun-api.onrender.com/deploy</div>
                   </div>
 
-                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12, color: "#fff" }}>For Developers & Users</h3>
-                  <p style={{ marginBottom: 16 }}>Deploy any Solidity or Solana contract programmatically with your own configuration.</p>
-                  <div style={{ background: "#0a0a0a", borderRadius: 12, padding: 20, marginBottom: 24, border: "1px solid rgba(255,255,255,0.1)", position: "relative" }}>
-                    <div style={{ position: "absolute", top: 12, right: 12, fontSize: 10, color: "rgba(255,255,255,0.3)", textTransform: "uppercase" }}>POST /deploy</div>
-                    <pre style={{ fontSize: 13, color: "#e0e0e0", fontFamily: F, margin: 0, overflow: "auto" }}>{`{
-  "chainId": "omega-testnet",
-  "config": {
-    "name": "My Custom Contract",
-    "symbol": "MCC"
-  },
+                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: "#fff" }}>Supported Networks</h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 32 }}>
+                    {[
+                      { id: "omega-mainnet", name: "Omega Mainnet", type: "Gasless" },
+                      { id: "base", name: "Base Mainnet", type: "Low Gas" },
+                      { id: "ethereum", name: "Ethereum", type: "Standard" },
+                      { id: "monad", name: "Monad", type: "High Speed" },
+                      { id: "somnia", name: "Somnia", type: "EVM" },
+                      { id: "solana", name: "Solana", type: "Non-EVM" },
+                    ].map(net => (
+                      <div key={net.id} style={{ background: "rgba(255,255,255,0.03)", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: 13, color: "#ddd", fontFamily: F }}>{net.id}</span>
+                        <span style={{ fontSize: 10, background: net.type === "Gasless" ? "#4ade80" : "rgba(255,255,255,0.1)", color: net.type === "Gasless" ? "#000" : "#888", padding: "2px 6px", borderRadius: 4, fontWeight: 700 }}>{net.type}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: "#fff" }}>Agent Deployment Examples</h3>
+                  <p style={{ fontSize: 13, marginBottom: 16 }}>Copy these JSON payloads to instruct your AI agent.</p>
+
+                  {/* ERC-20 Example */}
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#56B6C2", marginBottom: 8, textTransform: "uppercase", letterSpacing: "1px" }}>Scenario 1: Deploy a Meme Token</div>
+                    <div style={{ background: "#0a0a0a", borderRadius: 12, padding: 16, border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden" }}>
+                      <pre style={{ fontSize: 11, color: "#e0e0e0", fontFamily: F, margin: 0, overflow: "auto", maxHeight: 200 }}>{`{
+  "chainId": "omega-mainnet",
+  "privateKey": "YOUR_KEY",
+  "contractName": "LobsterCoin",
+  "constructorArgs": ["LobsterCoin", "LOB", "1000000"],
   "sources": {
-    "Contract.sol": { "content": "..." }
-  },
-  "privateKey": "0x..."
+    "LobsterCoin.sol": {
+      "content": "// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.20;\\nimport '@openzeppelin/contracts/token/ERC20/ERC20.sol';\\ncontract LobsterCoin is ERC20 {\\n constructor(string memory n, string memory s, uint256 supply) ERC20(n, s) {\\n _mint(msg.sender, supply * 10**18);\\n }\\n}"
+    }
+  }
 }`}</pre>
-                  </div>
-
-                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12, color: "#fff" }}>For Bots & AI Agents</h3>
-                  <p style={{ marginBottom: 16 }}>AI Agents can use Dapp.Fun as a deployment infrastructure. Simply pass the generated Solidity code and target chain.</p>
-                  <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 16, padding: 20, border: "1px solid rgba(255,255,255,0.1)" }}>
-                    <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF5F57" }}></div>
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FEBC2E" }}></div>
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#28C840" }}></div>
                     </div>
-                    <code style={{ fontSize: 12, color: "#56B6C2", fontFamily: F }}>
-                      // 🤖 Logic: "Hey Agent, deploy a token on Omega Chain"<br />
-                      const res = await axios.post('/deploy', &#123;<br />
-                      &nbsp;&nbsp;chainId: 'omega-mainnet',<br />
-                      &nbsp;&nbsp;sources: &#123; "Token.sol": &#123; content: aiGeneratedCode &#125; &#125;<br />
-                      &#125;);<br />
-                      console.log("Live at:", res.data.result.explorerUrl);
-                    </code>
                   </div>
 
-                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12, marginTop: 32, color: "#fff" }}>Features</h3>
-                  <ul style={{ paddingLeft: 20 }}>
-                    <li><strong style={{ color: "#fff" }}>Auto-Imports</strong>: Resolves OpenZeppelin dependencies automatically.</li>
-                    <li><strong style={{ color: "#fff" }}>Cross-Chain</strong>: Unified API for both EVM and Solana.</li>
-                    <li><strong style={{ color: "#fff" }}>Optimizer</strong>: Automatically enables Solidity optimizer (200 runs).</li>
-                  </ul>
+                  {/* NFT Example */}
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#C678DD", marginBottom: 8, textTransform: "uppercase", letterSpacing: "1px" }}>Scenario 2: Deploy NFT Collection</div>
+                    <div style={{ background: "#0a0a0a", borderRadius: 12, padding: 16, border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden" }}>
+                      <pre style={{ fontSize: 11, color: "#e0e0e0", fontFamily: F, margin: 0, overflow: "auto", maxHeight: 200 }}>{`{
+  "chainId": "base",
+  "privateKey": "YOUR_KEY",
+  "contractName": "CyberLobsters",
+  "constructorArgs": ["CyberLobsters", "CLOB"],
+  "sources": {
+    "CyberLobsters.sol": {
+      "content": "..." // Standard ERC721 Code
+    }
+  }
+}`}</pre>
+                    </div>
+                  </div>
+
+                  {/* DEX Example */}
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#E5C07B", marginBottom: 8, textTransform: "uppercase", letterSpacing: "1px" }}>Scenario 3: Deploy DEX Factory</div>
+                    <div style={{ background: "#0a0a0a", borderRadius: 12, padding: 16, border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden" }}>
+                      <pre style={{ fontSize: 11, color: "#e0e0e0", fontFamily: F, margin: 0, overflow: "auto", maxHeight: 200 }}>{`{
+  "chainId": "monad",
+  "privateKey": "YOUR_KEY",
+  "contractName": "DEXFactory",
+  "constructorArgs": ["0xFeeReceiverAddress"],
+  "sources": {
+    "DEX.sol": {
+      "content": "contract DEXFactory { ... }"
+    }
+  }
+}`}</pre>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 32, padding: 16, background: "rgba(255, 193, 7, 0.1)", border: "1px solid rgba(255, 193, 7, 0.2)", borderRadius: 8 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#FFC107", marginBottom: 4 }}>⚠️ Auto-Import Feature</div>
+                    <p style={{ fontSize: 12, margin: 0, opacity: 0.8 }}>The API automatically resolves imports from <code>@openzeppelin</code> via unpkg. You do not need to upload these files manually.</p>
+                  </div>
+
                 </div>
               </>}
 
@@ -1717,9 +1756,10 @@ pub struct GlobalState {
                 </div>
               </>}
             </div>
-          </div>
-        </div>
-      )}
+          </div >
+        </div >
+      )
+      }
 
       {/* Hero Section */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 16px", textAlign: "center" }}>
@@ -1800,7 +1840,7 @@ pub struct GlobalState {
           <span>Privacy</span><span>Terms</span>
         </div>
       </div>
-    </div>
+    </div >
   );
 
   // ━━━ TEMPLATES ━━━
