@@ -69,8 +69,22 @@ app.post('/deploy', async (req, res) => {
         let targetArtifact = artifact;
         if (sources && !artifact) {
             const artifacts = await compileSolidity(sources);
-            // Assume the first or specified contract
-            targetArtifact = artifacts[0];
+
+            if (req.body.contractName) {
+                targetArtifact = artifacts.find(a => a.name === req.body.contractName);
+            } else {
+                // Heuristic: Filter out interfaces/abstracts (empty bytecode)
+                const deployable = artifacts.filter(a => a.bytecode && a.bytecode !== '0x' && a.bytecode.length > 2);
+
+                if (deployable.length > 0) {
+                    // Pick the one with the largest bytecode, assuming it's the main contract
+                    targetArtifact = deployable.reduce((prev, current) =>
+                        (prev.bytecode.length > current.bytecode.length) ? prev : current
+                    );
+                } else {
+                    targetArtifact = artifacts[0]; // Fallback
+                }
+            }
         }
 
         if (!targetArtifact) return res.status(400).json({ error: 'No artifact or sources provided' });
