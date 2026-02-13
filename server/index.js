@@ -44,17 +44,24 @@ app.post('/compile', async (req, res) => {
  */
 app.post('/deploy', async (req, res) => {
     try {
-        const { chainId, config, privateKey, sources, artifact, constructorArgs } = req.body;
+        const { chainId, config, privateKey, sources, artifact, constructorArgs, contractName } = req.body;
 
-        const pk = privateKey || process.env.DEFAULT_PRIVATE_KEY;
+        let pk = privateKey || process.env.DEFAULT_PRIVATE_KEY;
         if (!pk) return res.status(401).json({ error: 'No private key provided and no default key set' });
+
+        // Ensure EVM private key has 0x prefix
+        if (chainId !== 'solana' && !pk.startsWith('0x') && pk.length === 64) {
+            pk = '0x' + pk;
+        }
 
         const explorerBases = {
             'omega-mainnet': '0x4e4542bc.explorer.aurora-cloud.dev',
             'omega-testnet': 'explorer.omeganetwork.co',
             'solana': 'explorer.solana.com',
             'somnia': 'explorer.somnia.network',
-            'monad': 'monadscan.com'
+            'monad': 'monadscan.com',
+            'base': 'basescan.org',
+            'ethereum': 'etherscan.io'
         };
 
         // 1. Handle Solana
@@ -70,36 +77,43 @@ app.post('/deploy', async (req, res) => {
         if (sources && !artifact) {
             const artifacts = await compileSolidity(sources);
 
-            if (req.body.contractName) {
-                targetArtifact = artifacts.find(a => a.name === req.body.contractName);
+            if (contractName || req.body.contractName) {
+                const nameToFind = contractName || req.body.contractName;
+                targetArtifact = artifacts.find(a => a.name === nameToFind);
+                if (!targetArtifact) {
+                    return res.status(400).json({
+                        error: `Contract '${nameToFind}' not found. Available: ${artifacts.map(a => a.name).join(', ')}`
+                    });
+                }
             } else {
-                // Heuristic: Filter out interfaces/abstracts (empty bytecode)
+                // Heuristic: Filter out interfaces/abstracts
                 const deployable = artifacts.filter(a => a.bytecode && a.bytecode !== '0x' && a.bytecode.length > 2);
-
                 if (deployable.length > 0) {
-                    // Pick the one with the largest bytecode, assuming it's the main contract
                     targetArtifact = deployable.reduce((prev, current) =>
                         (prev.bytecode.length > current.bytecode.length) ? prev : current
                     );
                 } else {
-                    targetArtifact = artifacts[0]; // Fallback
+                    targetArtifact = artifacts[0];
                 }
             }
         }
 
         if (!targetArtifact) return res.status(400).json({ error: 'No artifact or sources provided' });
 
+        console.log(`[API] Deploying ${targetArtifact.name} (Bytecode: ${targetArtifact.bytecode?.length} chars) to ${chainId}`);
+
         const chains = {
             'omega-mainnet': 'https://0x4e4542bc.rpc.aurora-cloud.dev',
             'omega-testnet': 'https://0x4e454228.rpc.aurora-cloud.dev',
             'somnia': 'https://api.infra.mainnet.somnia.network/',
-            'monad': 'https://rpc.monad.xyz'
+            'monad': 'https://rpc.monad.xyz',
+            'base': 'https://mainnet.base.org',
+            'ethereum': 'https://eth.llamarpc.com'
         };
 
         const rpcUrl = req.body.rpcUrl || chains[chainId] || process.env.DEFAULT_RPC;
         if (!rpcUrl) return res.status(400).json({ error: 'Invalid chainId or RPC URL' });
 
-        // Set gasless options only for Omega Networks
         const deployOptions = (chainId && chainId.startsWith('omega')) ? { gasPrice: 0 } : {};
 
         const result = await deployEVM(targetArtifact, rpcUrl, pk, constructorArgs || [], deployOptions);
